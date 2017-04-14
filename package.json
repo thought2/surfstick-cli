@@ -1,0 +1,30 @@
+{
+  "name": "surfstick-cli",
+  "version": "1.0.0",
+  "description": "Command Line Interface to Control O2 Surfstick (ZTE MF710) ",
+  "main": "src/cmd.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thought2/surfstick-cli.git"
+  },
+  "keywords": [
+    "surfstick",
+    "cli"
+  ],
+  "dependencies": [],
+  "author": "Thought2",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/thought2/surfstick-cli/issues"
+  },
+  "homepage": "https://github.com/thought2/surfstick-cli#readme",
+  "bin": {
+    "surfstick": "./src/cmd.js"
+  },
+  "scripts": {
+    "nix": "npm2nix package.json nix-deps.nix"
+  }
+}

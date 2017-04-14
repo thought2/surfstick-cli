@@ -1,0 +1,11 @@
+/scratch
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.tramp_history
+.\#*
+
