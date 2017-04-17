@@ -1,101 +1,147 @@
-const http = require('http')
-const qs   = require('querystring')
+const promisify = require('promisify-node');
+const http      = require('http')
+const qs        = require('querystring')
+const _         = require('lodash')
+var   data      = require('./data.json')
 
-const [,,pin] = process.argv;
+var prepareData
 
-const hostname = "192.168.0.1"
+prepareData(data)
 
-const errors = {
-    network: 'Network Error',
-    api:     'API Error'
+var {requestOpts} = data
+
+function prepareData (data) {
+    const {def, get, set, pin, status, connect, disconnect} = data.requestOpts
+
+    _.update(status, 'data.cmd', (xs) => xs.join(','))
+
+    _.merge(set, def)
+    _.merge(get, def)
+    _.merge(pin, set)
+    _.merge(status, get)
+    _.merge(connect, set)
+    _.merge(disconnect, set)
+    
+    return data
 }
 
-const msgs = {
-    sending_pin: 'Sending PIN...',
-    connecting:  'Connecting...',
-    ok:          'ok'
-}
-
-const headers =  {
-    'User-Agent':       'Mozilla/5.0',
-    'Accept':           'application/json, text/javascript, */*; q=0.01',
-    'Accept-Language':  'en-US,en;q=0.5',
-    'Accept-Encoding':  'gzip, deflate',
-    'Content-Type':     'application/x-www-form-urlencoded; charset=UTF-8',
-    'X-Requested-With': 'XMLHttpRequest',
-    'Referer':          'http://192.168.0.1/index.html',
-    'DNT':              1,
-    'Connection':       'keep-alive'
-}
-
-const options = {
-    hostname: hostname,
-    port:     80,
-    path:     '/goform/goform_set_cmd_process',
-    method:   'POST',
-    headers:  headers
-}
-
-const enterPinData = {
-    goformId:  'ENTER_PIN',
-    PinNumber: pin,
-    isTest:    false
-}
-
-const connectData = {
-    notCallback: true,
-    goformId:    'CONNECT_NETWORK',
-    isTest:      false
-}
-
-function readStream (stream) {
+function handleResponse (stream) {
     return new Promise((resolve, reject) => {
 	var result = "";
 	stream
-	    .on('end', () => resolve(result))
+	    .on('end', () => resolve(JSON.parse(result)))
 	    .on('error', e => reject(e))
 	    .on('data', chunk => result += chunk)
     })
 }
 
-const isSuccess = r => {
-    return r.result && r.result === "success"
-}
+function request (opts) {
+    var opts = _.cloneDeep(opts)
+    const data_str = qs.stringify(opts.data)
+    const {method} = opts 
+    
+    delete opts.data
 
-
-function request (postData) {
+    if (method == "POST") {
+	opts.headers["Content-Length"] = data_str.length
+    } else if (method == "GET") {
+	opts.path += "?" + data_str
+    }
+    
     return new Promise((resolve, reject) => {
-	const postStr = qs.stringify(postData)
-        const handleResult = data => {
-	    isSuccess(data) && resolve(data) || reject(errors.api)
-	}
-	options.headers['Content-Length'] = postStr.length
-	http
-	    .request(options, (res) => readStream(res)
-		     .then(x => JSON.parse(x))
-		     .then(handleResult))
-	    .on('error', e => reject(errors.network))
-	    .end(postStr)
+	const req = http
+	      .request(opts)
+	      .on('response', res => handleResponse(res).then(resolve))
+	      .on('error', err => reject(err))
+	      .end(method == "POST" ? data_str : "")
     })
 }
 
-function validate () {
-    return pin && true;
+function log (txt) {
+    console.log(txt)
 }
 
-const logMsg = (id) => console.log(msgs[id])
-const logErr = (id) => console.log(errors[id])
-const logOK = () => logMsg('ok')
+function logMsg (id) {
+    log(data.messages[id])
+}
+
+function logError (id) {
+    log(data.errors[id])
+}
+
+function parseStatus (input) {
+    const bytesReplace = {
+	'monthly_rx_bytes':  'monthly_down_mb',
+	'monthly_tx_bytes':  'monthly_up_mb',
+	'monthly_time':      'monthly_time',
+	'realtime_rx_bytes': 'realtime_down_mb',
+	'realtime_tx_bytes': 'realtime_up_mb',
+	'realtime_time':     'realtime_time'
+    }
+    
+    const bytesToMB = n => _.round(n / 1024 / 1024, 2)
+    
+    const mapKeyValue = (obj, f) =>
+	_.fromPairs(_.map(_.toPairs(obj), ([k, v]) => f (k, v)))
+
+    input = mapKeyValue(input, (k, v) => {
+	return _.has(bytesReplace, k) &&
+	    [_.get(bytesReplace, k), bytesToMB(_.toInteger(v))] ||
+	    [k, v]
+    })
+
+    return input
+}
+
+function pprint (obj) {
+    log(JSON.stringify(obj, null, 2))
+}
+
+const tasks = {}
+
+tasks.status = function() {
+    logMsg('get_status')
+    request(requestOpts.status)
+        .then(_.flow([parseStatus, pprint]))
+	.catch(() => logError('failed'))
+}
+
+tasks.pin = function (pin) {
+    logMsg('sending_pin')
+    const opts = _.merge({}, requestOpts.pin, {
+	data: {
+	    PinNumber: pin
+	}
+    })
+    request(opts)
+       	.then(() => logMsg('ok'))
+	.catch(() => logError('failed'))
+}
+
+tasks.connect = function () {
+    logMsg('connecting')
+    request(requestOpts.connect)
+    	.then(() => logMsg('ok'))
+	.catch(() => logError('failed'))
+}
+
+tasks.disconnect = function () {
+    log('connecting')
+    request(requestOpts.disconnect)
+        .then(() => logMsg('ok'))
+	.catch(() => logError('failed'))
+}
+
+tasks.help = function () {
+    logMsg('help_txt')
+    log((_.keys(tasks)).join(', '))
+}
 
 function main () {
-    logMsg('sending_pin');
-    request(enterPinData)
-    	.then(() => logMsg('ok'))
-    
-        .then(() => logMsg('connecting'))
-        .then(() => request(connectData))
-        .then(() => logMsg('ok'))
-	.catch(e => logErr(e))
+    const [,,task, ...args] = process.argv;
+    const taskFn = tasks[task] || tasks.help
+
+    taskFn.apply(this, args)
 }
 
-validate() && main();
+main()

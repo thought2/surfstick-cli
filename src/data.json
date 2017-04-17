@@ -1,0 +1,82 @@
+{
+    "requestOpts": {
+	"def": {
+	    "host":   "192.168.0.1",
+	    "port":   80,
+	    "headers": {
+		"Host": "192.168.0.1",
+		"User-Agent":       "Mozilla/5.0",
+		"Accept":           "application/json, text/javascript, */*; q=0.01",
+		"Accept-Language":  "en-US,en;q=0.5",
+		"Accept-Encoding":  "gzip, deflate",
+		"X-Requested-With": "XMLHttpRequest",
+		"Referer":          "http://192.168.0.1/index.html",
+		"DNT":              1,
+		"Connection":       "keep-alive"
+	    }
+	},
+	"set": {
+   	    "method": "POST",
+	    "path": "/goform/goform_set_cmd_process",
+	    "headers": {
+		"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+	    }
+	},
+	"get": {
+    	    "method": "GET",
+	    "path": "/goform/goform_get_cmd_process"
+	},
+	"pin": {
+	    "data": {
+		"goformId":  "ENTER_PIN",
+		"PinNumber": "",
+		"isTest":    false
+	    }
+	},
+	"status": {
+	    "data": {
+		"_": 1492423217697,
+		"isTest": false,
+		"cmd": [
+		    "pin_status",
+		    "signalbar",
+		    "network_type",
+		    "network_provider",
+		    "ppp_status",
+		    "monthly_rx_bytes",
+		    "monthly_tx_bytes",
+		    "monthly_time",
+		    "realtime_rx_bytes",
+		    "realtime_tx_bytes",
+		    "realtime_time"],
+		"multi_data": "1"
+	    }
+	},
+	"connect": {
+	    "data": {
+		"notCallback": true,
+		"goformId":    "CONNECT_NETWORK",
+		"isTest":      false
+	    }
+	},
+	"disconnect": {
+	    "data": {
+		"notCallback": true,
+		"goformId":    "DISCONNECT_NETWORK",
+		"isTest":      false
+	    }
+	}
+    },
+    "messages": {
+	"sending_pin": "Sending PIN...",
+	"get_status":  "Getting status...",
+	"connecting":  "Connecting...",
+	"ok":          "ok",
+	"get_status":  "Getting status...",
+	"help_txt":    "Available tasks:"
+    },
+    "errors": {
+    	"failed":      "failed"
+    }
+}
+
