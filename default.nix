@@ -17,7 +17,7 @@ in rec {
     name = "surfstick-cli-1.0.0";
     src = [ tarball ];
     buildInputs = nodePackages.nativeDeps."surfstick-cli" or [];
-    deps = [  ];
+    deps = [ nodePackages.by-spec."lodash"."^4.17.4" ];
     peerDependencies = [];
   };
 }

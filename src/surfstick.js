@@ -1,4 +1,3 @@
-const promisify = require('promisify-node');
 const http      = require('http')
 const qs        = require('querystring')
 const _         = require('lodash')

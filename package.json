@@ -4,7 +4,7 @@
   "description": "Command Line Interface to Control O2 Surfstick (ZTE MF710) ",
   "main": "src/cmd.js",
   "scripts": {
-    "nix": "npm2nix package.json nix-deps.nix"
+    "nix": "npm2nix --overwrite package.json nix-deps.nix"
   },
   "repository": {
     "type": "git",
